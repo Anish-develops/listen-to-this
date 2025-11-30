@@ -57,13 +57,19 @@ async function getSpotifyTopTracks(
         }
     );
 
+    const data = await res.json();
+
     if (!res.ok) {
-        const error = await res.json();
-        console.error("Spotify API error:", error);
+        console.error("Spotify API error:", data);
+        if (res.status === 401) {
+            throw new Error("Spotify session expired. Please login again.");
+        }
         throw new Error("Failed to fetch Spotify data");
     }
 
-    const data = await res.json();
+    if (!data.items || data.items.length === 0) {
+        throw new Error("No tracks found. Listen to more music first!");
+    }
 
     return data.items.map((track: Record<string, unknown>) => ({
         name: track.name as string,

@@ -41,15 +41,31 @@ export default function DashboardPage() {
 
         try {
             const res = await fetch("/api/roast", { method: "POST" });
+
+            // Check if response is JSON
+            const contentType = res.headers.get("content-type");
+            if (!contentType || !contentType.includes("application/json")) {
+                throw new Error("Server error. Please try again.");
+            }
+
             const data = await res.json();
 
             if (!res.ok) {
+                // If session expired, redirect to login
+                if (
+                    res.status === 401 ||
+                    data.error?.includes("expired") ||
+                    data.error?.includes("login")
+                ) {
+                    window.location.href = "/api/auth/spotify/login";
+                    return;
+                }
                 setError(data.error || "Failed to generate roast");
             } else {
                 setRoast(data.roast);
             }
         } catch {
-            setError("Something went wrong");
+            setError("Something went wrong. Please try again.");
         } finally {
             setLoading(false);
         }
